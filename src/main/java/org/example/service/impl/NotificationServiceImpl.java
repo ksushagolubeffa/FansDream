@@ -12,8 +12,10 @@ import org.example.repository.UserRepository;
 import org.example.service.NotificationService;
 import org.springframework.stereotype.Service;
 
+import javax.transaction.Transactional;
 import java.security.Principal;
 import java.util.List;
+import java.util.UUID;
 
 @Service
 @Slf4j
@@ -26,38 +28,69 @@ public class NotificationServiceImpl implements NotificationService {
 
 
     @Override
-    public void addNotification(Principal principal, MediaContent content, MediaComments comment) {
-        User user = userRepository.findUserByUsername(principal.getName());
-        Notification notification = new Notification(user, content.getUuid(), comment.getUuid());
+    public void addNotification(User user, MediaContent content, MediaComments comment, Principal principal) {
+        User author  = getUserByPrincipal(principal);
+        Notification notification = new Notification(user, content, comment, author);
         repository.save(notification);
     }
 
     @Override
-    public void addContentNotification(MediaContent content) {
-        Notification notification;
-        if(content.getStatus() == MediaContent.Status.ACCEPTED){
-            notification = new Notification(content.getUser(), content.getUuid(), Notification.Message.ACCEPTED);
-        } else{
-            content.setStatus(MediaContent.Status.REJECTED);
-            notification = new Notification(content.getUser(), content.getUuid(), Notification.Message.REJECTED);
+    public void deleteNotificationByCommentId(UUID id) {
+        repository.deleteNotificationByCommentId(id);
+
+    }
+
+    @Override
+    public Notification findNotificationByCommentId(UUID id) {
+        return repository.findNotificationByCommentId(id);
+    }
+
+    @Override
+    public void acceptContent(UUID id){
+        MediaContent content = contentRepository.findById(id).orElse(null);
+        if(content!=null){
+            content.setStatus(MediaContent.Status.ACCEPTED);
+        }else {
+            log.error("NotificationService - accept content", "content==null");
         }
+        Notification notification = new Notification(content.getUser(), content, Notification.Message.ACCEPTED);
+        repository.save(notification);
+    }
+
+    @Override
+    public void rejectContent(UUID id){
+        MediaContent content = contentRepository.findById(id).orElse(null);
+        if(content!=null){
+            content.setStatus(MediaContent.Status.REJECTED);
+        }else {
+            log.error("NotificationService - reject content", "content==null");
+        }
+        Notification notification = new Notification(content.getUser(), content, Notification.Message.REJECTED);
         repository.save(notification);
     }
 
     @Override
     public List<Notification> getAll(Principal principal) {
-        User user = userRepository.findUserByUsername(principal.getName());
+        User user = getUserByPrincipal(principal);
         return repository.getAllByUser(user);
     }
 
+    @Transactional
     @Override
-    public void deleteNotification(Notification notification) {
-        repository.delete(notification);
+    public void deleteNotification(UUID id) {
+        repository.deleteNotificationByUuid(id);
+    }
+
+    @Transactional
+    @Override
+    public void deleteAll(Principal principal) {
+        User user = getUserByPrincipal(principal);
+        repository.deleteNotificationsByUser(user);
     }
 
     @Override
-    public void deleteAll(Principal principal) {
-        User user = userRepository.findUserByUsername(principal.getName());
-        repository.deleteNotificationsByUser(user);
+    public User getUserByPrincipal(Principal principal) {
+        if (principal == null) return new User();
+        return userRepository.findUserByEmail(principal.getName());
     }
 }

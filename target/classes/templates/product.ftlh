@@ -7,17 +7,18 @@
         $(document).ready(function() {
             // Загрузка списка продуктов
             $.ajax({
-                url: "/products",
+                url: "/product",
                 type: "GET",
                 dataType: "json",
                 success: function(data) {
                     // Отображение списка продуктов
-                    var products = data.products;
-                    for (var i = 0; i < products.length; i++) {
-                        var product = products[i];
-                        // var image = "<img src='" + product.image + "' alt='" + product.name + "' width='100' height='100'>";
-                        var name = "<a href='#' onclick='showProduct(" + product + ")'>" + product.name + "</a>";
-                        $("#products").append("<li>" + image + " " + name + " " + product.price + " руб.</li>");
+                    let products = data.products;
+                    for (let i = 0; i < products.length; i++) {
+                        let product = products[i];
+                        // let image = "<img src='" + product.image + "' alt='" + product.name + "' width='100' height='100'>";
+                        let name = "<a href='#' onclick='showProduct(" + product + ")'>" + product.name + "</a>";
+                        $("#products").append("<li>" + name + " " + product.price + " руб.</li>");
+                        // + image + " "
                     }
                 },
                 error: function(jqXHR, textStatus, errorThrown) {
@@ -34,11 +35,11 @@
                 dataType: "json",
                 success: function(data) {
                     // Отображение детальной информации о продукте
-                    var product = data.product;
-                    var image = "<img src='" + product.image + "' alt='" + product.name + "' width='200' height='200'>";
-                    var name = "<h2>" + product.name + "</h2>";
-                    var description = "<p>" + product.description + "</p>";
-                    var price = "<p>" + product.price + " руб.</p>";
+                    let product = data.product;
+                    let image = "<img src='" + product.image + "' alt='" + product.name + "' width='200' height='200'>";
+                    let name = "<h2>" + product.name + "</h2>";
+                    let description = "<p>" + product.description + "</p>";
+                    let price = "<p>" + product.price + " руб.</p>";
                     $("#product-details").html(image + name + description + price);
                 },
                 error: function(jqXHR, textStatus, errorThrown) {
@@ -49,8 +50,8 @@
     </script>
 </head>
 <body>
-<h1>Список продуктов</h1>
-<ul id="products"></ul>
-<div id="product-details"></div>
+<#--<h1>Список продуктов</h1>-->
+<#--<ul id="products"></ul>-->
+<#--<div id="product-details"></div>-->
 </body>
 </html>

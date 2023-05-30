@@ -1,75 +1,75 @@
 package org.example.controller;
 
 import lombok.RequiredArgsConstructor;
-import org.example.entity.Order;
-import org.example.entity.Product;
-import org.example.entity.User;
+import org.example.client.ExchangeRatesClient;
+import org.example.client.dto.ExchangeRatesResponse;
 import org.example.service.OrderService;
-import org.example.service.ProductService;
-import org.example.service.UserService;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RestController;
 
 import java.security.Principal;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.stream.Collectors;
+import java.util.Map;
+import java.util.UUID;
 
-@RestController
+@Controller
 @RequiredArgsConstructor
 public class OrderController {
 
     private final OrderService service;
 
-    //has view
+    //all works correct
     @PreAuthorize("isAuthenticated()")
     @GetMapping("/cart")
-    private String getAllOrders(User user, Model model){
-        List<Order> orderList = new ArrayList<>();
-        service.getAllOrders().forEach(order -> {
-            if(order.getUserID().equals(user.getUuid()) && !order.isExecuted()){
-                orderList.add(order);
-            }
-        });
-        List<Product> products = service.findProductsById(orderList);
-        int sum = products.stream().mapToInt(Product::getPrice).sum();
-        model.addAttribute("products", products);
-        model.addAttribute("total", sum);
-        return "cart";
+    public String getAllOrders(Principal principal, Model model){
+        Map<String, Object> map = service.getAllOrders(principal);
+        if(map!=null) {
+            model.addAttribute("orders", map.get("orders"));
+            model.addAttribute("total", map.get("total"));
+            model.addAttribute("usd", map.get("usd"));
+            model.addAttribute("eur", map.get("eur"));
+            model.addAttribute("count", map.get("count"));
+            return "carts";
+        }
+        return "error";
     }
 
-    //has view
+    //all works correct
     @PreAuthorize("isAuthenticated()")
     @PostMapping("/cart")
-    private String endOrder(List<Order> orders){
-        if(!service.endOrder(orders)){
-            return "error";
+    public String endOrder(Principal principal){
+        if(service.endOrder(principal)){
+            return "redirect:/profile";
+        }else{
+            return "redirect:/cart?error";
         }
-        return "profile";
     }
 
-    //has view
+    //all works correct
     @PreAuthorize("isAuthenticated()")
-    @PostMapping("/products/{product}/addToCart")
-    private String addToCart(@PathVariable Product product, Principal principal){
-        User user = service.getUserByPrincipal(principal);
-        service.addNewOrder(new Order(user.getUuid(), product.getUuid(), false));
-        return "redirect:/";
+    @PostMapping("/products/{id}/addToCart")
+    public String addToCart(@PathVariable("id")UUID id,
+                            Principal principal){
+        service.addNewOrder(principal, id);
+        return "redirect:/products/{id}";
     }
 
-    //has view
+    //all works correct
     @PreAuthorize("isAuthenticated()")
-    @PostMapping("/cart/{order}")
-    private String deleteOrder(@PathVariable Order order){
-        if(!service.deleteOrder(order.getUuid())){
-            return "error";
-        }
-        return "redirect:/";
+    @PostMapping("/cart/{id}")
+    public String deleteOrder(@PathVariable("id") UUID id){
+        service.deleteOrder(id);
+        return "redirect:/cart";
+    }
+
+    //all works correct
+    @PreAuthorize("isAuthenticated()")
+    @PostMapping("/cart/deleteAll")
+    public String deleteAllOrder(Principal principal){
+        service.deleteAll(principal);
+        return "redirect:/cart";
     }
 }

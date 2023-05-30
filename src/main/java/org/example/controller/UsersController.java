@@ -2,156 +2,177 @@ package org.example.controller;
 
 import lombok.RequiredArgsConstructor;
 import org.example.entity.MediaContent;
-import org.example.entity.Order;
 import org.example.entity.Product;
 import org.example.entity.User;
-import org.example.service.NotificationService;
+import org.example.entity.response.UserResponse;
+import org.example.security.detail.UserDetailsImpl;
 import org.example.service.ProductService;
 import org.example.service.UserService;
-import org.example.service.impl.NotificationServiceImpl;
-import org.example.service.impl.ProductServiceImpl;
-import org.example.service.impl.UserServiceImpl;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.boot.Banner;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.servlet.ModelAndView;
 
 import javax.annotation.security.PermitAll;
+import javax.transaction.Transactional;
+import javax.validation.Valid;
+
 import java.io.IOException;
 import java.security.Principal;
+import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
+import java.util.Objects;
+import java.util.UUID;
 
 @Controller
-@RequiredArgsConstructor
 public class UsersController {
-    @Autowired
+
     private final UserService service;
-    private final NotificationServiceImpl notificationService;
-    private final ProductServiceImpl productService;
 
-    //has view
-    @PreAuthorize("hasAuthority('ADMIN')")
+    public UsersController(@Qualifier("userServiceBase") UserService userService) {
+        this.service = userService;
+    }
+
+//    @PreAuthorize("hasAuthority('ADMIN')")
+//    @RequestMapping(value = "/users", method = RequestMethod.GET)
+//    @ResponseBody
+//    public List<UserResponse> getAllUsers() {
+//        List<User> userList = service.getAllUsers();
+//        List<UserResponse> users = new ArrayList<>();
+//
+//        userList.forEach(user->
+//                users.add(new UserResponse(user.getUuid(),
+//                        user.getUsername(),
+//                        user.getEmail(),
+//                        user.getRole(),
+//                        user.getBalance(),
+//                        user.getState()))
+//        );
+//
+//        return users;
+//    }
+
     @GetMapping("/users")
-    @ResponseBody
-    public List<User> getAllUsers() {
-        return service.getAllUsers();
+    public List<UserResponse> getAllUsers() {
+        List<User> userList = service.getAllUsers();
+        List<UserResponse> users = new ArrayList<>();
+
+        userList.forEach(user->
+                users.add(new UserResponse(user.getUuid(),
+                        user.getUsername(),
+                        user.getEmail(),
+                        user.getRole(),
+                        user.getBalance(),
+                        user.getState()))
+        );
+        return users;
     }
 
-    //has view
-    @PreAuthorize("isAuthenticated()")
-    @GetMapping("/users/{user}")
-    private String userInfo(@PathVariable("user") User user, Model model) {
-        model.addAttribute("user", user);
-        return "user-info";
+    //all works correct
+    @PermitAll
+    @GetMapping("/users/{id}")
+    public String userInfo(@PathVariable("id") UUID id,
+                           Model model) {
+        model.addAttribute("user", service.findUserById(id));
+        return "user";
     }
 
-
-    //TO-DO
+//    TO-DO
     @PreAuthorize("hasAuthority('ADMIN')")
-    @PostMapping("/users")
-    private String banUser(@PathVariable("user") User user) {
-        service.findUserById(user.getUuid()).setState(User.State.NOT_ACTIVE);
-        return "redirect:/";
+    @PutMapping("/users/{id}/state")
+    private String banUser(@PathVariable("id") UUID id) {
+        service.findUserById(id).setState(User.State.NOT_ACTIVE);
+        return "redirect:/users";
     }
 
 
-    //has view
+    // all works correct
     @PreAuthorize("isAuthenticated()")
     @GetMapping("/profile")
-    private String getProfilePage(Principal principal, Model model) {
-        User user = service.findUserByUsername(principal);
+    public String getProfilePage(Principal principal,
+                                 Model model) {
+        User user = service.findUserByEmail(principal);
+        if(user == null){
+            return "home-page";
+        }
         model.addAttribute("user", user);
         model.addAttribute("isAdmin", user.getRole()== User.Role.ADMIN);
         return "profile";
     }
 
-    @PreAuthorize("isAuthenticated()")
-    @GetMapping("/profile/media")
-    private String getMyMedia(Model model, Principal principal) {
-        User user = service.findUserByUsername(principal);
-        model.addAttribute("contentList", user.getContentList());
-        return "media";
-    }
-
-    //has view
+    //all works correct
     @PreAuthorize("isAuthenticated()")
     @PostMapping("/profile/edit")
-    private String updateProfile(User user, MultipartFile image) throws IOException {
-        service.updateUser(user, image);
-        return "redirect:/profile";
+    public String updateProfile(@Valid @RequestParam ("username") String username,
+                                @Valid @RequestParam ("password") String password,
+                                @Valid @RequestParam ("newPassword") String newPassword,
+                                @Valid @RequestParam ("image") MultipartFile image,
+                                Principal principal,
+                                Model model) throws IOException {
+        if(service.arePasswordsEquals(principal, password)){
+            service.updateUser(principal, username, newPassword, image);
+        }
+        else{
+            return "redirect:/error";
+        }
+        model.addAttribute("user", service.findUserByEmail(principal));
+        model.addAttribute("isAdmin", service.findUserByEmail(principal).getRole()== User.Role.ADMIN);
+        return "profile";
     }
 
-    //has view
+    // all works correct
     @PreAuthorize("isAuthenticated()")
     @GetMapping("/profile/edit")
-    private String editProfile(Principal principal, Model model) {
-        User user = service.findUserByUsername(principal);
+    public String editProfile(Principal principal, Model model) {
+        User user = service.findUserByEmail(principal);
+        if(user==null){
+            return "redirect:/";
+        }
         model.addAttribute("user", user);
         return "profile-edit";
     }
 
-    //has view
+    // all works correct
     @PreAuthorize("isAuthenticated()")
     @PostMapping("/profile")
-    private String deleteUser(User user, Model model) {
-        if (!service.deleteUser(user.getUuid())) {
-            return "error";
-        }
-        return "redirect:/sign-up";
+    public String deleteUser(Principal principal) {
+        service.deleteUser(principal);
+        SecurityContextHolder.clearContext();
+        return "redirect:/signUp";
     }
 
-    @PermitAll
-    @GetMapping("/users/{user}/media")
-    private String allMedia(@PathVariable User user, Model model) {
-        model.addAttribute("contentList", user.getContentList());
-        return "media";
+    //all works correct
+    @PreAuthorize("isAuthenticated()")
+    @GetMapping("/logout")
+    public String exitUser() {
+        return "redirect:/";
     }
 
-    //has view
+    //all works correct
     @PreAuthorize("isAuthenticated()")
     @GetMapping("/profile/orders")
-    private String getOrders(Principal principal, Model model){
-        List<Order> orderList = service.findAllOrders(principal);
-        List<Product> list = orderList.stream().map(order -> productService.findProductById(order.getProductID())).collect(Collectors.toList());
-        model.addAttribute("products", list);
-        return "orders";
+    public String getOrders(Principal principal, Model model){
+        List<Product> list = service.findAllOrders(principal);
+        if(list!=null) {
+            model.addAttribute("products", list);
+            return "orders";
+        }
+        return "error";
     }
 
-    //has view
+    //all works correct
     @PreAuthorize("hasAuthority('ADMIN')")
     @GetMapping("/profile/check")
-    private String getContentPage(Model model){
+    public String getContentPage(Model model){
         model.addAttribute("contentList", service.getContentForCheck());
         return "check";
     }
 
-    //has view
-    @PreAuthorize("hasAuthority('ADMIN')")
-    @PostMapping("/profile/check/{content}/add")
-    private String addContent(@PathVariable MediaContent content){
-        content.setStatus(MediaContent.Status.ACCEPTED);
-        notificationService.addContentNotification(content);
-        return "redirect:/";
-    }
-
-    //has view
-    @PreAuthorize("hasAuthority('ADMIN')")
-    @PostMapping("/profile/check/{content}/remove")
-    private String removeContent(@PathVariable MediaContent content){
-        notificationService.addContentNotification(content);
-        return "redirect:/";
-    }
-
-    @PreAuthorize("isAuthenticated()")
-    @GetMapping("/profile/likes")
-    private String getAllLikes(Model model, Principal principal){
-        model.addAttribute("contentList", service.findAllLikes(principal));
-        return "media";
-    }
 }

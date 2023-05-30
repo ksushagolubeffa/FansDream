@@ -18,51 +18,55 @@ import org.springframework.web.servlet.ModelAndView;
 import javax.annotation.security.PermitAll;
 import java.security.Principal;
 import java.util.List;
+import java.util.UUID;
 
-@RestController
+@Controller
 @RequiredArgsConstructor
 public class NotificationController {
 
     private final NotificationService service;
 
+    //all works good
     @PreAuthorize("isAuthenticated()")
     @GetMapping("/profile/notifications")
-    private List<Notification> getAll(Principal principal){
-        return service.getAll(principal);
+    public String getAll(Principal principal,
+                                     Model model){
+        List<Notification> notifications = service.getAll(principal);
+        model.addAttribute("notifications", notifications);
+        boolean count = notifications.size()!=0;
+        model.addAttribute("count", count);
+        return "notifications";
     }
 
+    //all works correct
     @PreAuthorize("isAuthenticated()")
-    @PostMapping("/profile/notifications/{notification}")
-    public ResponseEntity<String> deleteNotification(@PathVariable Notification notification){
-        service.deleteNotification(notification);
-        return ResponseEntity.ok().build();
+    @PostMapping("/profile/notifications/delete/{id}")
+    public String deleteNotification(@PathVariable ("id") UUID id){
+        service.deleteNotification(id);
+        return "redirect:/profile/notifications";
     }
 
+    //all works correct
     @PreAuthorize("isAuthenticated()")
     @PostMapping("/profile/notifications")
-    public ModelAndView deleteAllNotifications(Principal principal){
+    public String deleteAllNotifications(Principal principal){
         service.deleteAll(principal);
-        return new ModelAndView("profile");
+        return "redirect:/profile";
     }
 
-//    @PreAuthorize("isAuthenticated()")
-//    @GetMapping("/profile/notifications")
-//    private String getAllNotifications(Model model, Principal principal){
-//        model.addAttribute("notificationList", service.getAll(principal));
-//        return "notification";
-//    }
+    //all works correct
+    @PreAuthorize("hasAuthority('ADMIN')")
+    @PostMapping("/profile/check/{id}/accept")
+    public String addContent(@PathVariable ("id")UUID id){
+        service.acceptContent(id);
+        return "redirect:/profile/check";
+    }
 
-//    @PreAuthorize("isAuthenticated()")
-//    @PostMapping("/profile/notifications/{notification}")
-//    private String deleteNotification(@PathVariable Notification notification){
-//        service.deleteNotification(notification);
-//        return "redirect:/";
-//    }
-//
-//    @PreAuthorize("isAuthenticated()")
-//    @PostMapping("/profile/notifications")
-//    private String deleteAllNotifications(Principal principal){
-//        service.deleteAll(principal);
-//        return "profile";
-//    }
+    //all works correct
+    @PreAuthorize("hasAuthority('ADMIN')")
+    @PostMapping("/profile/check/{id}/reject")
+    public String removeContent(@PathVariable ("id")UUID id){
+        service.rejectContent(id);
+        return "redirect:/profile/check";
+    }
 }

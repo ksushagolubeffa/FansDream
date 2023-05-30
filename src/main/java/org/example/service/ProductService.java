@@ -14,15 +14,18 @@ public interface ProductService {
 
     List<Product> getAllProducts();
 
-    List<ProductComments> getAllComments(Product product);
+//    MultipartFile getImage(UUID id);
 
-    void updateProduct(Product product, MultipartFile imageFile) throws IOException;
+
+    List<ProductComments> getAllComments(UUID id);
+
+    void updateProduct(UUID id, String name, String description, int price, MultipartFile imageFile) throws IOException;
 
     Product findProductById(UUID id);
 
-    void addNewProduct(Product product, MultipartFile imageFile) throws IOException;
+    void addNewProduct(String name, String description, int price, MultipartFile imageFile) throws IOException;
 
-    boolean deleteProduct(UUID id);
+    void deleteProduct(UUID id);
 
     User getUserByPrincipal(Principal principal);
 }

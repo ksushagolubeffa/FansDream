@@ -9,7 +9,9 @@ import java.util.UUID;
 
 public interface MediaCommentsService {
 
-    void save(Principal principal, MediaContent content, MediaComments comment);
+    void save(Principal principal, UUID id, String comment);
 
-    boolean delete(MediaContent content, UUID id);
+    boolean delete(UUID id, UUID idComment);
+
+    User getUserByPrincipal(Principal principal);
 }

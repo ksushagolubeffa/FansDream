@@ -1,30 +1,34 @@
 package org.example.service;
 
 import org.example.entity.Order;
-import org.example.entity.OrderDTO;
 import org.example.entity.Product;
 import org.example.entity.User;
 
 import java.security.Principal;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 
 public interface OrderService {
 
-    List<Order> getAllOrders();
+    Map<String, Object> getAllOrders(Principal principal);
 
-    Product findProductByOrder(Order order);
+    Order findById(UUID id);
 
-    Order findOrderById(UUID id);
+    void endOrders(List<Order> orders);
+
+    List<Order> getAll();
+
+    void deleteAll(Principal principal);
 
     List<Product> findProductsById(List<Order> orders);
 
     User getUserByPrincipal(Principal principal);
 
-    boolean endOrder(List<Order> order);
+    boolean endOrder(Principal principal);
 
-    void addNewOrder(Order order);
+    void addNewOrder(Principal principal, UUID id);
 
     boolean deleteOrder(UUID id);
 }

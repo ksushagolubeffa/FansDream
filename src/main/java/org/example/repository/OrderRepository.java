@@ -9,5 +9,6 @@ import java.util.UUID;
 
 public interface OrderRepository extends JpaRepository<Order, UUID> {
 
-    List<Order> findOrdersByUser(User user);
+    void deleteAllByUser(User user);
+
 }

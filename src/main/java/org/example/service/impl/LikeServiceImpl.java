@@ -6,12 +6,14 @@ import org.example.entity.Like;
 import org.example.entity.MediaContent;
 import org.example.entity.User;
 import org.example.repository.LikeRepository;
+import org.example.repository.MediaContentRepository;
 import org.example.repository.UserRepository;
 import org.example.service.LikeService;
 import org.springframework.stereotype.Service;
 
 import java.security.Principal;
 import java.util.List;
+import java.util.UUID;
 
 @Service
 @Slf4j
@@ -20,30 +22,44 @@ public class LikeServiceImpl implements LikeService {
 
     private final LikeRepository repository;
     private final UserRepository userRepository;
-
+    private final MediaContentRepository contentRepository;
 
     @Override
-    public void addLike(Principal principal, MediaContent content) {
-        User user = userRepository.findUserByUsername(principal.getName());
+    public void addLike(Principal principal, UUID id) {
+        User user = getUserByPrincipal(principal);
+        MediaContent content = contentRepository.findById(id).orElse(null);
         Like like = new Like(user, content);
         user.getLikes().add(like);
-        content.getLikes().add(like);
+        if(content!=null){
+            content.getLikes().add(like);
+        }else {
+            log.error("LikeService - add like", "content==null");
+        }
         repository.save(like);
     }
 
     @Override
     public List<MediaContent> findAllUserLikes(Principal principal) {
-        User user = userRepository.findUserByUsername(principal.getName());
+        User user = getUserByPrincipal(principal);
         repository.findAllLikesByUser(user);
         return null;
     }
 
 
     @Override
-    public void removeLike(Principal principal, MediaContent content) {
-        Like like = repository.findByUserAndContent(userRepository.findUserByUsername(principal.getName()), content);
+    public void removeLike(Principal principal, UUID id) {
+        MediaContent content = contentRepository.findById(id).orElse(null);
+        Like like = repository.findByUserAndContent(getUserByPrincipal(principal), content);
         if(like!=null){
             repository.delete(like);
+        }else {
+            log.error("LikeService - remove like", "like does not exist");
         }
+    }
+
+    @Override
+    public User getUserByPrincipal(Principal principal) {
+        if (principal == null) return new User();
+        return userRepository.findUserByEmail(principal.getName());
     }
 }

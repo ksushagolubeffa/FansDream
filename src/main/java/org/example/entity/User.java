@@ -4,6 +4,8 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.Immutable;
+import org.hibernate.annotations.Type;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -25,16 +27,15 @@ import java.util.List;
 public class User extends AbstractEntity implements UserDetails {
 
     @Column(unique = true)
-//    @Size(min = 2, message = "Не меньше 5 знаков")
     private String username;
+    @Column(unique = true, updatable = false)
+    private String email;
     @Column
-//    @Size(min = 2, message = "Не меньше 5 знаков")
     private String password;
     @Column
     private Integer balance;
-    @Column
-    @Lob
-    private byte[] image;
+    @OneToOne(mappedBy = "user", optional = false)
+    private Image image;
     @Column
     @Enumerated(value = EnumType.STRING)
     private State state;
@@ -53,6 +54,9 @@ public class User extends AbstractEntity implements UserDetails {
 
     @OneToMany(cascade = CascadeType.ALL, fetch = FetchType.LAZY, mappedBy = "user")
     private List<Notification> notifications = new ArrayList<>();
+
+    @OneToMany(cascade = CascadeType.ALL, fetch = FetchType.LAZY, mappedBy = "author")
+    private List<Notification> notificationFromAuthor = new ArrayList<>();
 
     public enum Role{
         ADMIN, USER

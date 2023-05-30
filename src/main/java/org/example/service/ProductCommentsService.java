@@ -10,8 +10,10 @@ import java.util.UUID;
 
 public interface ProductCommentsService {
 
-    void saveComment(User user, Product product, ProductComments comment);
+    void saveComment(Principal principal, UUID id, String comment);
 
-    boolean delete(Product product, UUID id);
+    boolean delete(UUID idProduct, UUID idComment);
+
+    User getUserByPrincipal(Principal principal);
 
 }

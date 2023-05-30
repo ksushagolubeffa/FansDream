@@ -15,27 +15,38 @@ import java.util.UUID;
 @AllArgsConstructor
 @NoArgsConstructor
 public class Notification extends AbstractEntity{
+
     @ManyToOne(cascade = CascadeType.REFRESH, fetch = FetchType.EAGER)
     @JoinColumn
     private User user;
-    @Column
-    private UUID contentId;
-    @Column
-    private UUID commentId;
+
+    @ManyToOne(cascade = CascadeType.REFRESH, fetch = FetchType.EAGER)
+    @JoinColumn
+    private User author;
+
+    @ManyToOne(cascade = CascadeType.REFRESH, fetch = FetchType.EAGER)
+    @JoinColumn
+    private MediaContent content;
+
+    @ManyToOne(cascade = CascadeType.REFRESH, fetch = FetchType.EAGER)
+    @JoinColumn
+    private MediaComments comment;
+
     @Column
     @Enumerated(value = EnumType.STRING)
     private Message message;
 
-    public Notification(User user, UUID contentId, UUID commentId){
-        this.commentId = commentId;
+    public Notification(User user, MediaContent content, MediaComments comment, User author){
+        this.comment = comment;
         this.user = user;
-        this.contentId = contentId;
+        this.content = content;
+        this.author = author;
     }
 
-    public Notification(User user, UUID contentId, Message message){
+    public Notification(User user, MediaContent content, Message message){
         this.message = message;
         this.user = user;
-        this.contentId = contentId;
+        this.content = content;
     }
 
     public enum Message{

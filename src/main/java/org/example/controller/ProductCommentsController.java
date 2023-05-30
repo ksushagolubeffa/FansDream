@@ -9,49 +9,38 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 
+import javax.validation.Valid;
+import java.security.Principal;
+import java.util.UUID;
 
-@RestController
+@Controller
 @RequiredArgsConstructor
 public class ProductCommentsController {
+
     @Autowired
     private final ProductCommentsService service;
 
+    //all works correct
     @PreAuthorize("isAuthenticated()")
-    @PostMapping("/products/{product}/addComment")
-    @ResponseBody
-    public ResponseEntity<String> addComment(@PathVariable("product") Product product, @RequestBody ProductComments comment, @AuthenticationPrincipal User user){
-        service.saveComment(user, product, comment);
-        return ResponseEntity.ok("Comment added successfully");
+    @PostMapping("/products/{id}/addComment")
+    public String addComment(@PathVariable("id") UUID id,
+                             @Valid @RequestParam String comment,
+                             Principal principal){
+        service.saveComment(principal, id, comment);
+        return "redirect:/products/{id}";
     }
 
+    //all works correct
     @PreAuthorize("isAuthenticated()")
-    @PostMapping("/products/{product}/deleteComment")
-    @ResponseBody
-    public ResponseEntity<String> deleteComment(@PathVariable("product") Product product, @RequestBody ProductComments comment){
-        if(service.delete(product, comment.getUuid())){
-            return ResponseEntity.ok("Comment deleted successfully");
-        } else {
-            return ResponseEntity.badRequest().body("Failed to delete comment");
+    @PostMapping("/products/{id}/deleteComment")
+    public String deleteComment(@PathVariable("id") UUID id,
+                                 @RequestParam ("commentId") UUID idComment){
+        if(!service.delete(id, idComment)){
+            return "error";
         }
+        return "redirect:/products/{id}";
     }
-
-    //has view
-//    @PreAuthorize("isAuthenticated()")
-//    @PostMapping("/products/{product}/addComment")
-//    private String addComment(@PathVariable Product product, ProductComments comment, User user){
-//        service.saveComment(user, product, comment);
-//        return "redirect:/";
-//    }
-//
-//    //has view
-//    @PreAuthorize("isAuthenticated()")
-//    @PostMapping("/products/{product}/deleteComment")
-//    private String deleteComment(@PathVariable Product product, ProductComments comments){
-//        if(!service.delete(product, comments.getUuid())){
-//            return "error";
-//        }
-//        return "redirect:/";
-//    }
 }

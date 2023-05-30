@@ -12,8 +12,11 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 
+import javax.validation.Valid;
 import java.security.Principal;
+import java.util.UUID;
 
 @Controller
 @RequiredArgsConstructor
@@ -21,38 +24,25 @@ public class MediaCommentsController {
 
     private final MediaCommentsService service;
 
+    //all works correct
     @PreAuthorize("isAuthenticated()")
-    @PostMapping("/media/{content}/addComment")
-    public ResponseEntity<String> addComment(@PathVariable MediaContent content, MediaComments comment, Principal principal){
-        service.save(principal, content, comment);
-        return ResponseEntity.ok().build();
+    @PostMapping("/media/{id}/addComment")
+    public String addComment(@PathVariable("id")UUID id,
+                             @Valid @RequestParam("comment") String comment,
+                             Principal principal){
+        service.save(principal, id, comment);
+        return "redirect:/media/{id}";
     }
 
+    //all works correct
     @PreAuthorize("isAuthenticated()")
-    @PostMapping("/media/{content}/deleteComment")
-    public ResponseEntity<String> deleteComment(@PathVariable MediaContent content, MediaComments comments){
-        if(!service.delete(content, comments.getUuid())){
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+    @PostMapping("/media/{id}/deleteComment")
+    public String deleteComment(@PathVariable("id") UUID id,
+                                @RequestParam("commentId") UUID idComment){
+        if(!service.delete(id, idComment)){
+            return "error";
         }
-        return ResponseEntity.ok().build();
+        return "redirect:/media/{id}";
     }
-
-    //has view
-//    @PreAuthorize("isAuthenticated()")
-//    @PostMapping("/media/{content}/addComment")
-//    private String addComment(@PathVariable MediaContent content, MediaComments comment, Principal principal){
-//        service.save(principal, content, comment);
-//        return "redirect:/media/{content}";
-//    }
-//
-//    //has view
-//    @PreAuthorize("isAuthenticated()")
-//    @PostMapping("/media/{content}/deleteComment")
-//    private String deleteComment(@PathVariable MediaContent content, MediaComments comments){
-//        if(!service.delete(content, comments.getUuid())){
-//            return "error";
-//        }
-//        return "redirect:/media/{content}";
-//    }
 
 }

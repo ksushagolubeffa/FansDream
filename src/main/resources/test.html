@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html>
+<#include "new-menu.ftlh">
+<head>
+    <title>User List</title>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+</head>
+<body>
+<div class="container">
+    <h1>User List</h1>
+    <table id="user-table" class="table">
+        <thead>
+        <tr>
+            <th>ID</th>
+            <th>Name</th>
+            <th>Email</th>
+        </tr>
+        </thead>
+        <tbody></tbody>
+    </table>
+</div>
+<script>
+    $(document).ready(function() {
+        $.ajax({
+            url: "/users",
+            type: "GET",
+            contentType: "application/json; charset=utf-8",
+            dataType: "json",
+            success: function(users) {
+                users.forEach(function(user) {
+                    let row = $("<tr>" +
+                        "<td>" + user.uuid + "</td>" +
+                        "<td>" + user.username + "</td>" +
+                        "<td>" + user.email + "</td>" +
+                        "</tr>");
+                    $("#user-table tbody").append(row);
+                });
+            }
+        });
+    });
+</script>
+</body>
+</html>

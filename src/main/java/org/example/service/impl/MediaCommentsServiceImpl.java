@@ -14,6 +14,7 @@ import org.example.service.MediaCommentsService;
 import org.example.service.NotificationService;
 import org.springframework.stereotype.Service;
 
+import javax.transaction.Transactional;
 import java.security.Principal;
 import java.util.UUID;
 
@@ -25,22 +26,31 @@ public class MediaCommentsServiceImpl implements MediaCommentsService {
     private final MediaCommentsRepository repository;
     private final UserRepository userRepository;
     private final NotificationService notificationService;
+    private final MediaContentRepository contentRepository;
 
     @Override
-    public void save(Principal principal, MediaContent content, MediaComments comment) {
-        User user = userRepository.findUserByUsername(principal.getName());
-        comment.setUsername(user.getUsername());
-        comment.setContent(content);
-        repository.save(comment);
-        notificationService.addNotification(principal, content, comment);
+    public void save(Principal principal, UUID id, String comment) {
+        User user = getUserByPrincipal(principal);
+        MediaContent content = contentRepository.findById(id).orElse(null);
+        MediaComments comments = MediaComments.builder()
+                        .text(comment)
+                        .username(user.getUsername())
+                        .content(contentRepository.findById(id).orElse(null))
+                        .build();
+        repository.save(comments);
+        notificationService.addNotification(content.getUser(), content, comments, principal);
     }
 
+    @Transactional
     @Override
-    public boolean delete(MediaContent content, UUID id) {
-        MediaComments comment = repository.findById(id).orElse(null);
+    public boolean delete(UUID id, UUID idComment) {
+        MediaComments comment = repository.findById(idComment).orElse(null);
         if(comment!=null){
-            if(comment.getContent().getUuid().equals(content.getUuid())){
+            if(comment.getContent().getUuid().equals(id)){
                 repository.delete(comment);
+                if(notificationService.findNotificationByCommentId(idComment)!=null) {
+                    notificationService.deleteNotificationByCommentId(idComment);
+                }
                 return true;
             }
             log.error("Comment with id = {} is not found", id);
@@ -48,5 +58,11 @@ public class MediaCommentsServiceImpl implements MediaCommentsService {
             log.error("not such comment in database");
         }
         return false;
+    }
+
+    @Override
+    public User getUserByPrincipal(Principal principal) {
+        if (principal == null) return new User();
+        return userRepository.findUserByEmail(principal.getName());
     }
 }

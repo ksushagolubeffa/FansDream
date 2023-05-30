@@ -3,9 +3,10 @@ package org.example.entity;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.example.converters.DateConverter;
 
 import javax.persistence.*;
-import java.time.LocalDateTime;
+import java.time.LocalDate;
 import java.util.UUID;
 
 @Entity
@@ -15,24 +16,30 @@ import java.util.UUID;
 @Data
 public class Order extends AbstractEntity{
 
-    @Column
-    private UUID userID;
-    @Column
-    private UUID productID;
+    @OneToOne
+    private Product product;
     @Column
     private boolean isExecuted;
     @Column
-    private LocalDateTime date;
+    private String date;
+    @Column
+    private boolean selected;
 
     @ManyToOne(cascade = CascadeType.REFRESH, fetch = FetchType.EAGER)
     private User user;
 
     public Order(UUID userID, UUID productID, boolean isExecuted){
-        this.userID = userID;
-        this.productID = productID;
+        user = new User();
+        user.setUuid(userID);
+        product = new Product();
+        product.setUuid(productID);
         this.isExecuted = isExecuted;
     }
 
+
     @PrePersist
-    private void onCreate() { date = LocalDateTime.now(); }
+    private void onCreate() {
+        DateConverter converter = new DateConverter();
+        date = converter.convert(LocalDate.now());
+    }
 }

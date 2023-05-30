@@ -24,9 +24,13 @@ public interface MediaContentService {
 
     MediaContent findContentById(UUID id);
 
-    void updateMediaContent(MediaContent content, MultipartFile imageFile, MultipartFile videoFile) throws IOException;
+    void updateMediaContent(Principal principal, UUID id, String name, String description, MultipartFile imageFile) throws IOException;
 
-    void addMediaContent(Principal principal, MediaContent content, MultipartFile imageFile, MultipartFile videoFile) throws IOException;
+    void addMediaContent(Principal principal,  String name, String description, MultipartFile imageFile, MultipartFile videoFile) throws IOException;
 
     boolean deleteMediaContent(User user, UUID id);
+
+    List<MediaContent> findMostLiked();
+
+    List<MediaContent> searchMediaContent(String searchTerm);
 }

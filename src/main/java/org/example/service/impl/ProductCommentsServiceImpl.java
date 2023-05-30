@@ -7,6 +7,7 @@ import org.example.entity.ProductComments;
 import org.example.entity.User;
 import org.example.repository.ProductCommentsRepository;
 import org.example.repository.ProductRepository;
+import org.example.repository.UserRepository;
 import org.example.service.ProductCommentsService;
 import org.springframework.stereotype.Service;
 
@@ -21,19 +22,23 @@ public class ProductCommentsServiceImpl implements ProductCommentsService {
 
     private final ProductCommentsRepository repository;
     private final ProductRepository productRepository;
+    private final UserRepository userRepository;
 
     @Override
-    public void saveComment(User user, Product product, ProductComments comment) {
-        comment.setUsername(user.getUsername());
-        comment.setProduct(product);
-        repository.save(comment);
+    public void saveComment(Principal principal, UUID id, String comment) {
+        ProductComments comments = ProductComments.builder()
+                                .product(productRepository.findById(id).orElse(null))
+                                .text(comment)
+                                .username(getUserByPrincipal(principal).getUsername())
+                                .build();
+        repository.save(comments);
     }
 
     @Override
-    public boolean delete(Product product, UUID id) {
+    public boolean delete(UUID idProduct, UUID id) {
         ProductComments comment = repository.findById(id).orElse(null);
         if(comment!=null){
-            if(comment.getProduct().getUuid().equals(product.getUuid())){
+            if(comment.getProduct().getUuid().equals(idProduct)){
                 repository.delete(comment);
                 return true;
             }
@@ -42,5 +47,11 @@ public class ProductCommentsServiceImpl implements ProductCommentsService {
             log.error("not such comment in database");
         }
         return false;
+    }
+
+    @Override
+    public User getUserByPrincipal(Principal principal) {
+        if (principal == null) return new User();
+        return userRepository.findUserByEmail(principal.getName());
     }
 }

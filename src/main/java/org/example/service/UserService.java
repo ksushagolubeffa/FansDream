@@ -1,6 +1,7 @@
 package org.example.service;
 
 import org.example.entity.*;
+import org.example.entity.form.UserForm;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
@@ -10,25 +11,29 @@ import java.util.UUID;
 
 public interface UserService {
 
-    boolean deleteUser(UUID id);
+    void deleteUser(Principal principal);
 
-    boolean saveUser(User user, MultipartFile imageFile) throws IOException;
+    boolean arePasswordsEquals(Principal principal, String password);
 
-    void updateUser(User user, MultipartFile imageFile) throws IOException;
+    boolean saveUser(String username, String email, String password) throws IOException;
+
+    void updateUser(Principal principal, String username, String password, MultipartFile imageFile) throws IOException;
 
     User findUserById(UUID userId);
 
     List <MediaContent> getContentForCheck();
 
-    boolean signInUser(UserForm form);
+    void signInUser(UserForm form);
 
     List<MediaContent> findAllLikes(Principal principal);
 
-    List<Order> findAllOrders(Principal principal);
+    List<Product> findAllOrders(Principal principal);
 
     List<User> getAllUsers();
 
     User findUserByUsername(Principal principal);
+
+    User findUserByEmail(Principal principal);
 
 //    void updateUsername(String username, UUID id);
 //

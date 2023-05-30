@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 
 import javax.annotation.security.PermitAll;
 import java.security.Principal;
+import java.util.UUID;
 
 @Controller
 @RequiredArgsConstructor
@@ -23,33 +24,20 @@ public class LikeController {
     @Autowired
     private final LikeService service;
 
+    //all works correct
     @PreAuthorize("isAuthenticated()")
-    @PostMapping("/media/{content}/removeLike")
-    public ResponseEntity<String> deleteLike(@PathVariable MediaContent content, Principal principal){
-        service.removeLike(principal, content);
-        return ResponseEntity.ok().build();
+    @PostMapping("/media/{id}/removeLike")
+    public String deleteLike(@PathVariable("id") UUID id, Principal principal){
+        service.removeLike(principal, id);
+        return "redirect:/media/{id}";
     }
 
+    //all works correct
     @PreAuthorize("isAuthenticated()")
-    @PostMapping("/media/{content}/addLike")
-    public ResponseEntity<String> addLike(@PathVariable MediaContent content, Principal principal){
-        service.addLike(principal, content);
-        return ResponseEntity.ok().build();
+    @PostMapping("/media/{id}/addLike")
+    public String addLike(@PathVariable("id") UUID id,
+                           Principal principal){
+        service.addLike(principal, id);
+        return "redirect:/media/{id}";
     }
-
-    //has view
-//    @PreAuthorize("isAuthenticated()")
-//    @PostMapping("/media/{content}/removeLike")
-//    private String deleteLike(@PathVariable MediaContent content, Principal principal){
-//        service.removeLike(principal, content);
-//        return "redirect:/media/{content}";
-//    }
-//
-//    //has view
-//    @PreAuthorize("isAuthenticated()")
-//    @PostMapping("/media/{content}/addLike")
-//    private String addLike(@PathVariable MediaContent content, Principal principal){
-//        service.addLike(principal, content);
-//        return "redirect:/media/{content}";
-//    }
 }

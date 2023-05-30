@@ -2,93 +2,60 @@ package org.example.controller;
 
 import lombok.RequiredArgsConstructor;
 import org.example.entity.User;
-import org.example.entity.UserForm;
+import org.example.entity.form.UserForm;
 import org.example.service.UserService;
-import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
-import org.springframework.web.servlet.ModelAndView;
+import org.springframework.web.servlet.view.RedirectView;
 
-import javax.annotation.security.PermitAll;
+import javax.validation.Valid;
 import java.io.IOException;
+import java.security.Principal;
 
-@RestController
+@Controller
 @RequiredArgsConstructor
 public class SignController {
 
     private final UserService service;
 
-    //has view
-//    @PreAuthorize("isAnonymous()")
-//    @PostMapping("/signUp")
-//    public String createUser(User user, MultipartFile image) throws IOException {
-//        if(!service.saveUser(user, image)){
-//        }
-//        return "profile";
-//    }
-//
-//    //has view
-//    @PreAuthorize("isAnonymous()")
-//    @GetMapping("/signUp")
-//    public String signUpUser(){
-//        return "sign-up";
-//    }
-//
-////    has view
-//    @PermitAll
-//    @PostMapping("/signIn")
-//    public String loginUser(UserForm form){
-//        if(!service.signInUser(form)){
-//            return "error";
-//        }
-//        return "profile";
-//    }
-//
-//    //has view
-//    @PreAuthorize("isAnonymous()")
-//    @GetMapping("/signIn")
-//    public String signInUser(){
-//        return "sign-in";
-//    }
+    // all works correct
     @PreAuthorize("isAnonymous()")
     @PostMapping("/signUp")
-    @ResponseBody
-    public ResponseEntity<String> createUser(@RequestBody User user, @RequestParam("image") MultipartFile image) throws IOException {
-        if(service.saveUser(user, image)){
-            return ResponseEntity.ok("User created successfully");
-        } else {
-            return ResponseEntity.badRequest().body("Failed to create user");
+    public RedirectView createUser(@Valid @RequestParam("username") String username,
+                             @Valid @RequestParam("email") String email,
+                             @Valid @RequestParam("password") String password,
+                             @Valid @RequestParam("repeat") String repeat) throws IOException {
+        if(!password.equals(repeat)) {
+            return new RedirectView("/error");
         }
+        if(!service.saveUser(username, email, password)){
+            return new RedirectView("/error");
+        }
+        return new RedirectView("/signIn");
     }
 
+    // all works correct
     @PreAuthorize("isAnonymous()")
     @GetMapping("/signUp")
-    @ResponseBody
-    public ModelAndView signUpUser(){
-        ModelAndView modelAndView = new ModelAndView("sign-up");
-        modelAndView.addObject("user", new User());
-        return modelAndView;
+    public String signUpUser(){
+        return "sign-up";
     }
 
+    // all works correct
     @PreAuthorize("isAnonymous()")
     @PostMapping("/signIn")
-    @ResponseBody
-    public ResponseEntity<String> loginUser(@RequestBody UserForm form){
-        if(service.signInUser(form)){
-            return ResponseEntity.ok("User logged in successfully");
-        } else {
-            return ResponseEntity.badRequest().body("Failed to log in user");
-        }
+    public String loginUser(@Valid UserForm form){
+        service.signInUser(form);
+        return "profile";
     }
 
+    // all works correct
     @PreAuthorize("isAnonymous()")
     @GetMapping("/signIn")
-    @ResponseBody
-    public ModelAndView signInUser(){
-        ModelAndView modelAndView = new ModelAndView("sign-in");
-        modelAndView.addObject("userForm", new UserForm());
-        return modelAndView;
+    public String signInUser(){
+        return "sign-in";
     }
 
 }

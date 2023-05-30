@@ -1,6 +1,8 @@
 <!DOCTYPE html>
 <html>
 <body>
-<h1>Случилось плохое зло, простити</h1>
+<#if errorMessage??>
+    <div class="alert alert-danger">${errorMessage}</div>
+</#if>
 </body>
 </html>

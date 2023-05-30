@@ -1,13 +1,17 @@
 package org.example.entity;
 
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.example.converters.DateConverter;
 
 import javax.persistence.*;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 @Entity
+@Builder
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
@@ -17,9 +21,7 @@ public class ProductComments extends AbstractEntity{
     @Column
     private String text;
     @Column
-    private Long productID;
-    @Column
-    private LocalDateTime date;
+    private String date;
     @Column
     private String username;
 
@@ -28,5 +30,8 @@ public class ProductComments extends AbstractEntity{
     private Product product;
 
     @PrePersist
-    private void onCreate() { date = LocalDateTime.now(); }
+    private void onCreate() {
+        DateConverter converter = new DateConverter();
+        date = converter.convert(LocalDate.now());
+    }
 }
